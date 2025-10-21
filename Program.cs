@@ -2,6 +2,17 @@ using System;
 using System.Collections.Generic;
 namespace Lab4
 {
+    // Інтерфейс для математичних операцій
+    public interface IMathOperations
+    {
+        double FindMin();           // Знайти мінімальний елемент
+        double FindMax();           // Знайти максимальний елемент
+        double CalculateAverage();  // Обчислити середнє значення
+        void MultiplyByScalar(double scalar);  // Помножити на скаляр
+        void Normalize();           // Нормалізація (ділення на максимум)
+        string GetStatistics();     // Отримати статистичну інформацію
+    }
+    
     // Абстрактний базовий клас для 4-вимірних геометричних об'єктів
     public abstract class Shape4D
     {
@@ -54,7 +65,7 @@ namespace Lab4
     }
     
     // Клас одновимірного вектора розмірності 4
-    public class Vector4D : Shape4D
+    public class Vector4D : Shape4D, IMathOperations
     {
         protected double[] _elements; // Масив елементів вектора
        
@@ -167,9 +178,68 @@ namespace Lab4
         {
             return $"Тип: {GetType().Name}, Назва: {_name}, Розмірність: {DIMENSION}, Елементів: {DIMENSION}";
         }
+        
+        // ============= Реалізація інтерфейсу IMathOperations =============
+        
+        // Знаходження мінімального елемента
+        public double FindMin()
+        {
+            double min = _elements[0];
+            for (int i = 1; i < DIMENSION; i++)
+            {
+                if (_elements[i] < min)
+                    min = _elements[i];
+            }
+            return min;
+        }
+        
+        // Обчислення середнього значення
+        public double CalculateAverage()
+        {
+            return CalculateSum() / DIMENSION;
+        }
+        
+        // Множення всіх елементів на скаляр
+        public void MultiplyByScalar(double scalar)
+        {
+            for (int i = 0; i < DIMENSION; i++)
+            {
+                _elements[i] *= scalar;
+            }
+            Console.WriteLine($"[Vector4D] Вектор помножено на скаляр {scalar}");
+        }
+        
+        // Нормалізація (ділення всіх елементів на максимум)
+        public void Normalize()
+        {
+            double max = FindMax();
+            if (max != 0)
+            {
+                for (int i = 0; i < DIMENSION; i++)
+                {
+                    _elements[i] /= max;
+                }
+                Console.WriteLine($"[Vector4D] Вектор нормалізовано (поділено на максимум: {max})");
+            }
+            else
+            {
+                Console.WriteLine("[Vector4D] Неможливо нормалізувати: максимум = 0");
+            }
+        }
+        
+        // Отримання статистичної інформації
+        public string GetStatistics()
+        {
+            return $"📊 Статистика вектора:\n" +
+                   $"   • Мінімум: {FindMin():F2}\n" +
+                   $"   • Максимум: {FindMax():F2}\n" +
+                   $"   • Сума: {CalculateSum():F2}\n" +
+                   $"   • Середнє: {CalculateAverage():F2}\n" +
+                   $"   • Кількість елементів: {DIMENSION}";
+        }
     }
     // Похідний клас матриці 4x4
-    public class Matrix : Vector4D
+    public class Matrix : Vector4D, IMathOperations
     {
         private double[,] _matrix; // Двовимірний масив для матриці
         
@@ -301,6 +371,75 @@ namespace Lab4
         {
             return $"Тип: {GetType().Name}, Назва: {_name}, Розмірність: {DIMENSION}x{DIMENSION}, Елементів: {DIMENSION * DIMENSION}";
         }
+        
+        // ============= Реалізація інтерфейсу IMathOperations =============
+        
+        // Знаходження мінімального елемента матриці
+        public new double FindMin()
+        {
+            double min = _matrix[0, 0];
+            for (int i = 0; i < DIMENSION; i++)
+            {
+                for (int j = 0; j < DIMENSION; j++)
+                {
+                    if (_matrix[i, j] < min)
+                        min = _matrix[i, j];
+                }
+            }
+            return min;
+        }
+        
+        // Обчислення середнього значення елементів матриці
+        public new double CalculateAverage()
+        {
+            return CalculateSum() / (DIMENSION * DIMENSION);
+        }
+        
+        // Множення всіх елементів матриці на скаляр
+        public new void MultiplyByScalar(double scalar)
+        {
+            for (int i = 0; i < DIMENSION; i++)
+            {
+                for (int j = 0; j < DIMENSION; j++)
+                {
+                    _matrix[i, j] *= scalar;
+                }
+            }
+            Console.WriteLine($"[Matrix] Матриця помножена на скаляр {scalar}");
+        }
+        
+        // Нормалізація матриці (ділення на максимум)
+        public new void Normalize()
+        {
+            double max = FindMax();
+            if (max != 0)
+            {
+                for (int i = 0; i < DIMENSION; i++)
+                {
+                    for (int j = 0; j < DIMENSION; j++)
+                    {
+                        _matrix[i, j] /= max;
+                    }
+                }
+                Console.WriteLine($"[Matrix] Матрицю нормалізовано (поділено на максимум: {max})");
+            }
+            else
+            {
+                Console.WriteLine("[Matrix] Неможливо нормалізувати: максимум = 0");
+            }
+        }
+        
+        // Отримання статистичної інформації про матрицю
+        public new string GetStatistics()
+        {
+            return $"📊 Статистика матриці:\n" +
+                   $"   • Мінімум: {FindMin():F2}\n" +
+                   $"   • Максимум: {FindMax():F2}\n" +
+                   $"   • Сума: {CalculateSum():F2}\n" +
+                   $"   • Середнє: {CalculateAverage():F2}\n" +
+                   $"   • Розмір: {DIMENSION}x{DIMENSION}\n" +
+                   $"   • Кількість елементів: {DIMENSION * DIMENSION}";
+        }
     }
     // Головний клас програми
     class Program
@@ -309,11 +448,16 @@ namespace Lab4
         {
             Console.OutputEncoding = System.Text.Encoding.UTF8;
             Console.WriteLine("╔═══════════════════════════════════════════════════════════════╗");
-            Console.WriteLine("║  Лабораторна робота 6: Абстрактні класи та конструктори     ║");
-            Console.WriteLine("║  Демонстрація конструкторів, деструкторів та абстракції     ║");
+            Console.WriteLine("║  Лабораторна робота 6: Абстрактні класи та інтерфейси       ║");
+            Console.WriteLine("║  Демонстрація конструкторів, деструкторів та інтерфейсів    ║");
             Console.WriteLine("╚═══════════════════════════════════════════════════════════════╝\n");
             try
             {
+                // Демонстрація роботи з інтерфейсом
+                DemonstrateInterfaceUsage();
+                
+                Console.WriteLine("\n" + new string('═', 65) + "\n");
+                
                 // Демонстрація конструкторів та деструкторів
                 DemonstrateConstructorsAndDestructors();
                 
@@ -338,6 +482,90 @@ namespace Lab4
             {
                 // Ігноруємо помилку при перенаправленні вводу
             }
+        }
+        
+        // Метод для демонстрації роботи з інтерфейсом IMathOperations
+        static void DemonstrateInterfaceUsage()
+        {
+            Console.WriteLine("📌 ДЕМОНСТРАЦІЯ РОБОТИ З ІНТЕРФЕЙСОМ IMathOperations\n");
+            Console.WriteLine(new string('═', 65));
+            
+            // Створення вектора
+            Console.WriteLine("\n🔹 РОБОТА З ВЕКТОРОМ:");
+            Console.WriteLine(new string('-', 65));
+            Vector4D vector = new Vector4D(new double[] { 2.5, 8.0, 3.5, 6.0 });
+            vector.Display();
+            
+            // Використання методів інтерфейсу через змінну типу Vector4D
+            Console.WriteLine("\n📊 Статистичні дані:");
+            Console.WriteLine(vector.GetStatistics());
+            
+            // Множення на скаляр
+            Console.WriteLine("\n🔢 Множення вектора на скаляр 2.0:");
+            vector.MultiplyByScalar(2.0);
+            vector.Display();
+            
+            // Нормалізація
+            Console.WriteLine("\n📐 Нормалізація вектора:");
+            vector.Normalize();
+            vector.Display();
+            Console.WriteLine($"Перевірка: максимум після нормалізації = {vector.FindMax():F2}");
+            
+            // Створення матриці
+            Console.WriteLine("\n" + new string('═', 65));
+            Console.WriteLine("\n🔹 РОБОТА З МАТРИЦЕЮ:");
+            Console.WriteLine(new string('-', 65));
+            Matrix matrix = new Matrix(new double[,] {
+                { 1.0, 4.0, 2.0, 3.0 },
+                { 8.0, 5.0, 6.0, 7.0 },
+                { 9.0, 12.0, 10.0, 11.0 },
+                { 13.0, 16.0, 14.0, 15.0 }
+            });
+            matrix.Display();
+            
+            // Використання методів інтерфейсу через змінну типу Matrix
+            Console.WriteLine("\n📊 Статистичні дані:");
+            Console.WriteLine(matrix.GetStatistics());
+            
+            // Множення на скаляр
+            Console.WriteLine("\n🔢 Множення матриці на скаляр 0.5:");
+            matrix.MultiplyByScalar(0.5);
+            matrix.Display();
+            
+            // Нормалізація
+            Console.WriteLine("\n📐 Нормалізація матриці:");
+            matrix.Normalize();
+            matrix.Display();
+            Console.WriteLine($"Перевірка: максимум після нормалізації = {matrix.FindMax():F2}");
+            
+            // Демонстрація поліморфізму через інтерфейс
+            Console.WriteLine("\n" + new string('═', 65));
+            Console.WriteLine("\n🔸 ПОЛІМОРФІЗМ ЧЕРЕЗ ІНТЕРФЕЙС:");
+            Console.WriteLine(new string('-', 65));
+            
+            // Масив інтерфейсів
+            IMathOperations[] operations = new IMathOperations[2];
+            operations[0] = new Vector4D(new double[] { 10, 20, 30, 40 });
+            operations[1] = new Matrix(5.0); // Діагональна матриця
+            
+            Console.WriteLine("\nОбробка різних об'єктів через інтерфейс IMathOperations:\n");
+            
+            for (int i = 0; i < operations.Length; i++)
+            {
+                Console.WriteLine($"▶ Об'єкт #{i + 1} (тип: {operations[i].GetType().Name}):");
+                Console.WriteLine(new string('-', 65));
+                
+                // Виклик методів через інтерфейс
+                Console.WriteLine($"Мінімум: {operations[i].FindMin():F2}");
+                Console.WriteLine($"Максимум: {operations[i].FindMax():F2}");
+                Console.WriteLine($"Середнє: {operations[i].CalculateAverage():F2}");
+                Console.WriteLine();
+            }
+            
+            Console.WriteLine(new string('═', 65));
+            Console.WriteLine("✅ ВИСНОВОК: Інтерфейс IMathOperations дозволяє працювати з");
+            Console.WriteLine("   різними типами об'єктів через єдиний інтерфейс!");
+            Console.WriteLine(new string('═', 65));
         }
         
         // Метод для демонстрації конструкторів та деструкторів
