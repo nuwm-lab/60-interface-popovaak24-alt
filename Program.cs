@@ -1,6 +1,5 @@
 using System;
 using System.Collections.Generic;
-
 namespace Lab4
 {
     // Абстрактний базовий клас Shape4D — загальний контракт для 4-елементних фігур/контейнерів
