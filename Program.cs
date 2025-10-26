@@ -1,444 +1,194 @@
 using System;
 using System.Collections.Generic;
+
 namespace Lab4
 {
-    // Інтерфейс для математичних операцій
-    public interface IMathOperations
+    // Абстрактний базовий клас, який виділяє загальні контракти для "4-елементних" контейнерів
+    public abstract class Container4
     {
-        double FindMin();           // Знайти мінімальний елемент
-        double FindMax();           // Знайти максимальний елемент
-        double CalculateAverage();  // Обчислити середнє значення
-        void MultiplyByScalar(double scalar);  // Помножити на скаляр
-        void Normalize();           // Нормалізація (ділення на максимум)
-        string GetStatistics();     // Отримати статистичну інформацію
-    }
-    
-    // Абстрактний базовий клас для 4-вимірних геометричних об'єктів
-    public abstract class Shape4D
-    {
-        public const int DIMENSION = 4; // Константа для розмірності
-        protected string _name; // Назва об'єкта
-        protected static int _objectCount = 0; // Лічильник створених об'єктів
-        
-        // Конструктор за замовчуванням
-        protected Shape4D()
+        public const int DIMENSION = 4;
+
+        // Конструктор базового класу
+        protected Container4()
         {
-            _name = "Unnamed Shape";
-            _objectCount++;
-            Console.WriteLine($"[Конструктор Shape4D] Створено абстрактний об'єкт '{_name}'. Всього об'єктів: {_objectCount}");
+            Console.WriteLine($"[Container4] Створено екземпляр типу {GetType().Name}");
         }
-        
-        // Параметризований конструктор
-        protected Shape4D(string name)
-        {
-            _name = name ?? "Unnamed Shape";
-            _objectCount++;
-            Console.WriteLine($"[Конструктор Shape4D] Створено абстрактний об'єкт '{_name}'. Всього об'єктів: {_objectCount}");
-        }
-        
+
         // Деструктор (фіналізатор)
-        ~Shape4D()
+        ~Container4()
         {
-            _objectCount--;
-            Console.WriteLine($"[Деструктор Shape4D] Знищено об'єкт '{_name}'. Залишилось об'єктів: {_objectCount}");
+            Console.WriteLine($"[Container4] Фіналізатор викликано для {GetType().Name}");
         }
-        
-        // Властивість для отримання назви
-        public string Name
-        {
-            get { return _name; }
-            set { _name = value ?? "Unnamed Shape"; }
-        }
-        
-        // Статична властивість для отримання кількості об'єктів
-        public static int ObjectCount
-        {
-            get { return _objectCount; }
-        }
-        
-        // Абстрактні методи (обов'язкові для реалізації в похідних класах)
+
+        // Контракти, що мають реалізувати похідні класи
         public abstract void SetElements();
         public abstract void Display();
         public abstract double FindMax();
-        public abstract double CalculateSum();
-        public abstract string GetInfo();
     }
-    
-    // Клас одновимірного вектора розмірності 4
-    public class Vector4D : Shape4D, IMathOperations
+
+    // Базовий клас одновимірного вектора розмірності 4
+    public class Vector4D : Container4
     {
         protected double[] _elements; // Масив елементів вектора
-       
-        // Конструктор за замовчуванням
-        public Vector4D() : base("Vector4D")
+
+        // Конструктор
+        public Vector4D() : base()
         {
-            _elements = new double[DIMENSION];
-            Console.WriteLine($"[Конструктор Vector4D] Створено вектор з {DIMENSION} нульовими елементами");
+            _elements = new double[Container4.DIMENSION];
+            Console.WriteLine("[Vector4D] Конструктор виконано.");
         }
-        
-        // Параметризований конструктор (ініціалізація масивом)
-        public Vector4D(double[] values) : base("Vector4D")
-        {
-            if (values == null || values.Length != DIMENSION)
-                throw new ArgumentException($"Очікується масив довжини {DIMENSION}");
-            
-            _elements = new double[DIMENSION];
-            Array.Copy(values, _elements, DIMENSION);
-            Console.WriteLine($"[Конструктор Vector4D] Створено вектор з переданих значень: [{string.Join(", ", values)}]");
-        }
-        
-        // Параметризований конструктор (ініціалізація одним значенням)
-        public Vector4D(double value) : base("Vector4D")
-        {
-            _elements = new double[DIMENSION];
-            for (int i = 0; i < DIMENSION; i++)
-            {
-                _elements[i] = value;
-            }
-            Console.WriteLine($"[Конструктор Vector4D] Створено вектор з однаковими елементами: {value}");
-        }
-        
-        // Конструктор копіювання
-        public Vector4D(Vector4D other) : base($"Copy of {other._name}")
-        {
-            if (other == null)
-                throw new ArgumentNullException(nameof(other));
-            
-            _elements = new double[DIMENSION];
-            Array.Copy(other._elements, _elements, DIMENSION);
-            Console.WriteLine($"[Конструктор Vector4D] Створено копію вектора");
-        }
-        
-        // Деструктор (фіналізатор)
+
+        // Деструктор
         ~Vector4D()
         {
-            Console.WriteLine($"[Деструктор Vector4D] Очищення вектора '{_name}'. Звільнення пам'яті для {DIMENSION} елементів");
+            Console.WriteLine("[Vector4D] Деструктор (фіналізатор) викликано.");
         }
-        // Реалізація абстрактного методу для задання елементів вектора
+
+        // Віртуальний метод для задання елементів вектора
         public override void SetElements()
         {
-            Console.WriteLine($"Введіть {DIMENSION} елементи вектора:");
-            for (int i = 0; i < DIMENSION; i++)
+            Console.WriteLine($"Введіть {Container4.DIMENSION} елементи вектора:");
+            for (int i = 0; i < Container4.DIMENSION; i++)
             {
                 Console.Write($"Елемент [{i}]: ");
-                while (!double.TryParse(Console.ReadLine(), out _elements[i]))
+                string? input = Console.ReadLine();
+                while (input is null || !double.TryParse(input, out _elements[i]))
                 {
+                    if (input is null)
+                    {
+                        Console.WriteLine("Ввід завершено (EOF). Переривання вводу.");
+                        throw new OperationCanceledException("Ввід завершено користувачем.");
+                    }
                     Console.Write("Некоректне значення. Введіть число: ");
+                    input = Console.ReadLine();
                 }
             }
         }
+
         // Метод для задання елементів з масиву (для тестування)
-        public virtual void SetElements(double[] values)
+        public void SetElements(double[] values)
         {
             if (values is null)
                 throw new ArgumentNullException(nameof(values));
-            if (values.Length != DIMENSION)
-                throw new ArgumentException($"Очікується масив довжини {DIMENSION}.", nameof(values));
-            for (int i = 0; i < DIMENSION; i++)
+            if (values.Length != Container4.DIMENSION)
+                throw new ArgumentException($"Очікується масив довжини {Container4.DIMENSION}.", nameof(values));
+            for (int i = 0; i < Container4.DIMENSION; i++)
             {
                 _elements[i] = values[i];
             }
         }
-        // Реалізація абстрактного методу для виведення вектора на екран
+
+        // Віртуальний метод для виведення вектора на екран
         public override void Display()
         {
             Console.Write("Вектор: [");
-            for (int i = 0; i < DIMENSION; i++)
+            for (int i = 0; i < Container4.DIMENSION; i++)
             {
-                Console.Write(_elements[i]);
-                if (i < DIMENSION - 1) Console.Write(", ");
+                Console.Write($"{_elements[i]:F2}");
+                if (i < Container4.DIMENSION - 1) Console.Write(", ");
             }
             Console.WriteLine("]");
         }
-        // Реалізація абстрактного методу для знаходження максимального елемента
+
+        // Віртуальний метод для знаходження максимального елемента
         public override double FindMax()
         {
             double max = _elements[0];
-            for (int i = 1; i < DIMENSION; i++)
+            for (int i = 1; i < Container4.DIMENSION; i++)
             {
                 if (_elements[i] > max)
                     max = _elements[i];
             }
             return max;
         }
-        
-        // Реалізація абстрактного методу для обчислення суми елементів
-        public override double CalculateSum()
-        {
-            double sum = 0;
-            for (int i = 0; i < DIMENSION; i++)
-            {
-                sum += _elements[i];
-            }
-            return sum;
-        }
-        
-        // Реалізація абстрактного методу для отримання інформації про об'єкт
-        public override string GetInfo()
-        {
-            return $"Тип: {GetType().Name}, Назва: {_name}, Розмірність: {DIMENSION}, Елементів: {DIMENSION}";
-        }
-        
-        // ============= Реалізація інтерфейсу IMathOperations =============
-        
-        // Знаходження мінімального елемента
-        public double FindMin()
-        {
-            double min = _elements[0];
-            for (int i = 1; i < DIMENSION; i++)
-            {
-                if (_elements[i] < min)
-                    min = _elements[i];
-            }
-            return min;
-        }
-        
-        // Обчислення середнього значення
-        public double CalculateAverage()
-        {
-            return CalculateSum() / DIMENSION;
-        }
-        
-        // Множення всіх елементів на скаляр
-        public void MultiplyByScalar(double scalar)
-        {
-            for (int i = 0; i < DIMENSION; i++)
-            {
-                _elements[i] *= scalar;
-            }
-            Console.WriteLine($"[Vector4D] Вектор помножено на скаляр {scalar}");
-        }
-        
-        // Нормалізація (ділення всіх елементів на максимум)
-        public void Normalize()
-        {
-            double max = FindMax();
-            if (max != 0)
-            {
-                for (int i = 0; i < DIMENSION; i++)
-                {
-                    _elements[i] /= max;
-                }
-                Console.WriteLine($"[Vector4D] Вектор нормалізовано (поділено на максимум: {max})");
-            }
-            else
-            {
-                Console.WriteLine("[Vector4D] Неможливо нормалізувати: максимум = 0");
-            }
-        }
-        
-        // Отримання статистичної інформації
-        public string GetStatistics()
-        {
-            return $"📊 Статистика вектора:\n" +
-                   $"   • Мінімум: {FindMin():F2}\n" +
-                   $"   • Максимум: {FindMax():F2}\n" +
-                   $"   • Сума: {CalculateSum():F2}\n" +
-                   $"   • Середнє: {CalculateAverage():F2}\n" +
-                   $"   • Кількість елементів: {DIMENSION}";
-        }
     }
+
     // Похідний клас матриці 4x4
-    public class Matrix : Vector4D, IMathOperations
+    public class Matrix : Vector4D
     {
         private double[,] _matrix; // Двовимірний масив для матриці
-        
-        // Конструктор за замовчуванням
+
+        // Конструктор
         public Matrix() : base()
         {
-            _matrix = new double[DIMENSION, DIMENSION];
-            _name = "Matrix4x4";
-            Console.WriteLine($"[Конструктор Matrix] Створено матрицю {DIMENSION}x{DIMENSION} з нульовими елементами");
+            _matrix = new double[Container4.DIMENSION, Container4.DIMENSION];
+            Console.WriteLine("[Matrix] Конструктор виконано.");
         }
-        
-        // Параметризований конструктор (ініціалізація двовимірним масивом)
-        public Matrix(double[,] values) : base()
-        {
-            if (values == null || values.GetLength(0) != DIMENSION || values.GetLength(1) != DIMENSION)
-                throw new ArgumentException($"Очікується матриця розміру {DIMENSION}x{DIMENSION}");
-            
-            _matrix = new double[DIMENSION, DIMENSION];
-            Array.Copy(values, _matrix, DIMENSION * DIMENSION);
-            _name = "Matrix4x4";
-            Console.WriteLine($"[Конструктор Matrix] Створено матрицю {DIMENSION}x{DIMENSION} з переданих значень");
-        }
-        
-        // Параметризований конструктор (діагональна матриця)
-        public Matrix(double diagonalValue) : base()
-        {
-            _matrix = new double[DIMENSION, DIMENSION];
-            for (int i = 0; i < DIMENSION; i++)
-            {
-                _matrix[i, i] = diagonalValue;
-            }
-            _name = "Diagonal Matrix";
-            Console.WriteLine($"[Конструктор Matrix] Створено діагональну матрицю з значенням: {diagonalValue}");
-        }
-        
-        // Конструктор копіювання
-        public Matrix(Matrix other) : base()
-        {
-            if (other == null)
-                throw new ArgumentNullException(nameof(other));
-            
-            _matrix = new double[DIMENSION, DIMENSION];
-            Array.Copy(other._matrix, _matrix, DIMENSION * DIMENSION);
-            _name = $"Copy of {other._name}";
-            Console.WriteLine($"[Конструктор Matrix] Створено копію матриці");
-        }
-        
-        // Деструктор (фіналізатор)
+
+        // Деструктор
         ~Matrix()
         {
-            Console.WriteLine($"[Деструктор Matrix] Очищення матриці '{_name}'. Звільнення пам'яті для {DIMENSION * DIMENSION} елементів");
+            Console.WriteLine("[Matrix] Деструктор (фіналізатор) викликано.");
         }
+
         // Перевантажений метод для задання елементів матриці
         public override void SetElements()
         {
-            Console.WriteLine($"Введіть елементи матриці {DIMENSION}x{DIMENSION}:");
-            for (int i = 0; i < DIMENSION; i++)
+            Console.WriteLine($"Введіть елементи матриці {Container4.DIMENSION}x{Container4.DIMENSION}:");
+            for (int i = 0; i < Container4.DIMENSION; i++)
             {
-                for (int j = 0; j < DIMENSION; j++)
+                for (int j = 0; j < Container4.DIMENSION; j++)
                 {
                     Console.Write($"Елемент [{i},{j}]: ");
-                    while (!double.TryParse(Console.ReadLine(), out _matrix[i, j]))
+                    string? input = Console.ReadLine();
+                    while (input is null || !double.TryParse(input, out _matrix[i, j]))
                     {
+                        if (input is null)
+                        {
+                            Console.WriteLine("Ввід завершено (EOF). Переривання вводу.");
+                            throw new OperationCanceledException("Ввід завершено користувачем.");
+                        }
                         Console.Write("Некоректне значення. Введіть число: ");
+                        input = Console.ReadLine();
                     }
                 }
             }
         }
+
         // Метод для задання елементів з двовимірного масиву (для тестування)
         public void SetElements(double[,] values)
         {
             if (values is null)
                 throw new ArgumentNullException(nameof(values));
-            if (values.GetLength(0) != DIMENSION || values.GetLength(1) != DIMENSION)
-                throw new ArgumentException($"Очікується матриця розміру {DIMENSION}x{DIMENSION}.", nameof(values));
-            for (int i = 0; i < DIMENSION; i++)
+            if (values.GetLength(0) != Container4.DIMENSION || values.GetLength(1) != Container4.DIMENSION)
+                throw new ArgumentException($"Очікується матриця розміру {Container4.DIMENSION}x{Container4.DIMENSION}.", nameof(values));
+            for (int i = 0; i < Container4.DIMENSION; i++)
             {
-                for (int j = 0; j < DIMENSION; j++)
+                for (int j = 0; j < Container4.DIMENSION; j++)
                 {
                     _matrix[i, j] = values[i, j];
                 }
             }
         }
+
         // Перевантажений метод для виведення матриці на екран
         public override void Display()
         {
-            Console.WriteLine($"Матриця {DIMENSION}x{DIMENSION}:");
-            for (int i = 0; i < DIMENSION; i++)
+            Console.WriteLine($"Матриця {Container4.DIMENSION}x{Container4.DIMENSION}:");
+            for (int i = 0; i < Container4.DIMENSION; i++)
             {
                 Console.Write("| ");
-                for (int j = 0; j < DIMENSION; j++)
+                for (int j = 0; j < Container4.DIMENSION; j++)
                 {
                     Console.Write($"{_matrix[i, j]:F2} ");
                 }
                 Console.WriteLine("|");
             }
         }
+
         // Перевантажений метод для знаходження максимального елемента матриці
         public override double FindMax()
         {
             double max = _matrix[0, 0];
-            for (int i = 0; i < DIMENSION; i++)
+            for (int i = 0; i < Container4.DIMENSION; i++)
             {
-                for (int j = 0; j < DIMENSION; j++)
+                for (int j = 0; j < Container4.DIMENSION; j++)
                 {
                     if (_matrix[i, j] > max)
                         max = _matrix[i, j];
                 }
             }
             return max;
-        }
-        
-        // Перевизначення методу для обчислення суми всіх елементів матриці
-        public override double CalculateSum()
-        {
-            double sum = 0;
-            for (int i = 0; i < DIMENSION; i++)
-            {
-                for (int j = 0; j < DIMENSION; j++)
-                {
-                    sum += _matrix[i, j];
-                }
-            }
-            return sum;
-        }
-        
-        // Перевизначення методу для отримання інформації про матрицю
-        public override string GetInfo()
-        {
-            return $"Тип: {GetType().Name}, Назва: {_name}, Розмірність: {DIMENSION}x{DIMENSION}, Елементів: {DIMENSION * DIMENSION}";
-        }
-        
-        // ============= Реалізація інтерфейсу IMathOperations =============
-        
-        // Знаходження мінімального елемента матриці
-        public new double FindMin()
-        {
-            double min = _matrix[0, 0];
-            for (int i = 0; i < DIMENSION; i++)
-            {
-                for (int j = 0; j < DIMENSION; j++)
-                {
-                    if (_matrix[i, j] < min)
-                        min = _matrix[i, j];
-                }
-            }
-            return min;
-        }
-        
-        // Обчислення середнього значення елементів матриці
-        public new double CalculateAverage()
-        {
-            return CalculateSum() / (DIMENSION * DIMENSION);
-        }
-        
-        // Множення всіх елементів матриці на скаляр
-        public new void MultiplyByScalar(double scalar)
-        {
-            for (int i = 0; i < DIMENSION; i++)
-            {
-                for (int j = 0; j < DIMENSION; j++)
-                {
-                    _matrix[i, j] *= scalar;
-                }
-            }
-            Console.WriteLine($"[Matrix] Матриця помножена на скаляр {scalar}");
-        }
-        
-        // Нормалізація матриці (ділення на максимум)
-        public new void Normalize()
-        {
-            double max = FindMax();
-            if (max != 0)
-            {
-                for (int i = 0; i < DIMENSION; i++)
-                {
-                    for (int j = 0; j < DIMENSION; j++)
-                    {
-                        _matrix[i, j] /= max;
-                    }
-                }
-                Console.WriteLine($"[Matrix] Матрицю нормалізовано (поділено на максимум: {max})");
-            }
-            else
-            {
-                Console.WriteLine("[Matrix] Неможливо нормалізувати: максимум = 0");
-            }
-        }
-        
-        // Отримання статистичної інформації про матрицю
-        public new string GetStatistics()
-        {
-            return $"📊 Статистика матриці:\n" +
-                   $"   • Мінімум: {FindMin():F2}\n" +
-                   $"   • Максимум: {FindMax():F2}\n" +
-                   $"   • Сума: {CalculateSum():F2}\n" +
-                   $"   • Середнє: {CalculateAverage():F2}\n" +
-                   $"   • Розмір: {DIMENSION}x{DIMENSION}\n" +
-                   $"   • Кількість елементів: {DIMENSION * DIMENSION}";
         }
     }
     // Головний клас програми
@@ -448,21 +198,11 @@ namespace Lab4
         {
             Console.OutputEncoding = System.Text.Encoding.UTF8;
             Console.WriteLine("╔═══════════════════════════════════════════════════════════════╗");
-            Console.WriteLine("║  Лабораторна робота 6: Абстрактні класи та інтерфейси       ║");
-            Console.WriteLine("║  Демонстрація конструкторів, деструкторів та інтерфейсів    ║");
+            Console.WriteLine("║  Лабораторна робота 6: Абстрактні класи                      ║");
+            Console.WriteLine("║  Демонстрація абстрактних класів та поліморфізму             ║");
             Console.WriteLine("╚═══════════════════════════════════════════════════════════════╝\n");
             try
             {
-                // Демонстрація роботи з інтерфейсом
-                DemonstrateInterfaceUsage();
-                
-                Console.WriteLine("\n" + new string('═', 65) + "\n");
-                
-                // Демонстрація конструкторів та деструкторів
-                DemonstrateConstructorsAndDestructors();
-                
-                Console.WriteLine("\n" + new string('═', 65) + "\n");
-                
                 // Демонстрація динамічного створення об'єктів
                 DemonstrateDynamicPolymorphism();
                 Console.WriteLine("\n" + new string('═', 65) + "\n");
@@ -483,180 +223,6 @@ namespace Lab4
                 // Ігноруємо помилку при перенаправленні вводу
             }
         }
-        
-        // Метод для демонстрації роботи з інтерфейсом IMathOperations
-        static void DemonstrateInterfaceUsage()
-        {
-            Console.WriteLine("📌 ДЕМОНСТРАЦІЯ РОБОТИ З ІНТЕРФЕЙСОМ IMathOperations\n");
-            Console.WriteLine(new string('═', 65));
-            
-            // Створення вектора
-            Console.WriteLine("\n🔹 РОБОТА З ВЕКТОРОМ:");
-            Console.WriteLine(new string('-', 65));
-            Vector4D vector = new Vector4D(new double[] { 2.5, 8.0, 3.5, 6.0 });
-            vector.Display();
-            
-            // Використання методів інтерфейсу через змінну типу Vector4D
-            Console.WriteLine("\n📊 Статистичні дані:");
-            Console.WriteLine(vector.GetStatistics());
-            
-            // Множення на скаляр
-            Console.WriteLine("\n🔢 Множення вектора на скаляр 2.0:");
-            vector.MultiplyByScalar(2.0);
-            vector.Display();
-            
-            // Нормалізація
-            Console.WriteLine("\n📐 Нормалізація вектора:");
-            vector.Normalize();
-            vector.Display();
-            Console.WriteLine($"Перевірка: максимум після нормалізації = {vector.FindMax():F2}");
-            
-            // Створення матриці
-            Console.WriteLine("\n" + new string('═', 65));
-            Console.WriteLine("\n🔹 РОБОТА З МАТРИЦЕЮ:");
-            Console.WriteLine(new string('-', 65));
-            Matrix matrix = new Matrix(new double[,] {
-                { 1.0, 4.0, 2.0, 3.0 },
-                { 8.0, 5.0, 6.0, 7.0 },
-                { 9.0, 12.0, 10.0, 11.0 },
-                { 13.0, 16.0, 14.0, 15.0 }
-            });
-            matrix.Display();
-            
-            // Використання методів інтерфейсу через змінну типу Matrix
-            Console.WriteLine("\n📊 Статистичні дані:");
-            Console.WriteLine(matrix.GetStatistics());
-            
-            // Множення на скаляр
-            Console.WriteLine("\n🔢 Множення матриці на скаляр 0.5:");
-            matrix.MultiplyByScalar(0.5);
-            matrix.Display();
-            
-            // Нормалізація
-            Console.WriteLine("\n📐 Нормалізація матриці:");
-            matrix.Normalize();
-            matrix.Display();
-            Console.WriteLine($"Перевірка: максимум після нормалізації = {matrix.FindMax():F2}");
-            
-            // Демонстрація поліморфізму через інтерфейс
-            Console.WriteLine("\n" + new string('═', 65));
-            Console.WriteLine("\n🔸 ПОЛІМОРФІЗМ ЧЕРЕЗ ІНТЕРФЕЙС:");
-            Console.WriteLine(new string('-', 65));
-            
-            // Масив інтерфейсів
-            IMathOperations[] operations = new IMathOperations[2];
-            operations[0] = new Vector4D(new double[] { 10, 20, 30, 40 });
-            operations[1] = new Matrix(5.0); // Діагональна матриця
-            
-            Console.WriteLine("\nОбробка різних об'єктів через інтерфейс IMathOperations:\n");
-            
-            for (int i = 0; i < operations.Length; i++)
-            {
-                Console.WriteLine($"▶ Об'єкт #{i + 1} (тип: {operations[i].GetType().Name}):");
-                Console.WriteLine(new string('-', 65));
-                
-                // Виклик методів через інтерфейс
-                Console.WriteLine($"Мінімум: {operations[i].FindMin():F2}");
-                Console.WriteLine($"Максимум: {operations[i].FindMax():F2}");
-                Console.WriteLine($"Середнє: {operations[i].CalculateAverage():F2}");
-                Console.WriteLine();
-            }
-            
-            Console.WriteLine(new string('═', 65));
-            Console.WriteLine("✅ ВИСНОВОК: Інтерфейс IMathOperations дозволяє працювати з");
-            Console.WriteLine("   різними типами об'єктів через єдиний інтерфейс!");
-            Console.WriteLine(new string('═', 65));
-        }
-        
-        // Метод для демонстрації конструкторів та деструкторів
-        static void DemonstrateConstructorsAndDestructors()
-        {
-            Console.WriteLine("📌 ДЕМОНСТРАЦІЯ КОНСТРУКТОРІВ ТА ДЕСТРУКТОРІВ\n");
-            Console.WriteLine(new string('═', 65));
-            
-            // Демонстрація різних конструкторів Vector4D
-            Console.WriteLine("\n🔹 ДЕМОНСТРАЦІЯ КОНСТРУКТОРІВ КЛАСУ Vector4D:");
-            Console.WriteLine(new string('-', 65));
-            
-            Console.WriteLine("\n1️⃣ Конструктор за замовчуванням:");
-            Vector4D v1 = new Vector4D();
-            v1.Display();
-            Console.WriteLine(v1.GetInfo());
-            
-            Console.WriteLine("\n2️⃣ Параметризований конструктор (з масивом):");
-            Vector4D v2 = new Vector4D(new double[] { 1.5, 2.3, 4.7, 3.9 });
-            v2.Display();
-            Console.WriteLine($"Сума елементів: {v2.CalculateSum():F2}");
-            Console.WriteLine($"Максимальний елемент: {v2.FindMax():F2}");
-            
-            Console.WriteLine("\n3️⃣ Параметризований конструктор (одне значення):");
-            Vector4D v3 = new Vector4D(5.0);
-            v3.Display();
-            Console.WriteLine(v3.GetInfo());
-            
-            Console.WriteLine("\n4️⃣ Конструктор копіювання:");
-            Vector4D v4 = new Vector4D(v2);
-            v4.Display();
-            Console.WriteLine($"Це копія вектора v2");
-            
-            // Демонстрація різних конструкторів Matrix
-            Console.WriteLine("\n" + new string('═', 65));
-            Console.WriteLine("\n🔹 ДЕМОНСТРАЦІЯ КОНСТРУКТОРІВ КЛАСУ Matrix:");
-            Console.WriteLine(new string('-', 65));
-            
-            Console.WriteLine("\n1️⃣ Конструктор за замовчуванням:");
-            Matrix m1 = new Matrix();
-            m1.Display();
-            Console.WriteLine(m1.GetInfo());
-            
-            Console.WriteLine("\n2️⃣ Параметризований конструктор (з двовимірним масивом):");
-            Matrix m2 = new Matrix(new double[,] {
-                { 1.5, 2.0, 3.5, 4.0 },
-                { 5.5, 6.0, 7.5, 8.0 },
-                { 9.5, 10.0, 11.5, 12.0 },
-                { 13.5, 14.0, 15.5, 16.0 }
-            });
-            m2.Display();
-            Console.WriteLine($"Сума елементів: {m2.CalculateSum():F2}");
-            Console.WriteLine($"Максимальний елемент: {m2.FindMax():F2}");
-            
-            Console.WriteLine("\n3️⃣ Параметризований конструктор (діагональна матриця):");
-            Matrix m3 = new Matrix(7.0);
-            m3.Display();
-            Console.WriteLine(m3.GetInfo());
-            
-            Console.WriteLine("\n4️⃣ Конструктор копіювання:");
-            Matrix m4 = new Matrix(m2);
-            m4.Display();
-            Console.WriteLine($"Це копія матриці m2");
-            
-            // Демонстрація статичного лічильника об'єктів
-            Console.WriteLine("\n" + new string('═', 65));
-            Console.WriteLine($"📊 СТАТИСТИКА: Всього створено об'єктів Shape4D: {Shape4D.ObjectCount}");
-            Console.WriteLine(new string('═', 65));
-            
-            Console.WriteLine("\n⚠️ Деструктори будуть викликані автоматично при завершенні програми");
-            Console.WriteLine("    або коли об'єкти будуть видалені збирачем сміття (Garbage Collector)\n");
-            
-            // Примусово викликаємо збирач сміття для демонстрації деструкторів
-            Console.WriteLine("🗑️ Викликаємо збирач сміття для демонстрації деструкторів...");
-            v1 = null!;
-            v2 = null!;
-            v3 = null!;
-            v4 = null!;
-            m1 = null!;
-            m2 = null!;
-            m3 = null!;
-            m4 = null!;
-            
-            GC.Collect();
-            GC.WaitForPendingFinalizers();
-            GC.Collect();
-            
-            Console.WriteLine("\n✅ Збирач сміття завершив роботу");
-            Console.WriteLine($"📊 Об'єктів залишилось: {Shape4D.ObjectCount}");
-        }
-        
         // Метод для демонстрації динамічного поліморфізму
         static void DemonstrateDynamicPolymorphism()
         {
