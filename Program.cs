@@ -22,10 +22,16 @@ namespace Lab4
         public abstract double FindMax();
     }
 
-    // Базовий клас одновимірного вектора розмірності 4
-    public class Vector4D : Shape4D
+    // Простий інтерфейс для демонстрації різної поведінки через один API
+    public interface ILoggable
     {
-        private double[] _elements; // Масив елементів вектора (тепер приватне поле)
+        void LogInfo();
+    }
+
+    // Базовий клас одновимірного вектора розмірності 4
+    public class Vector4D : Shape4D, ILoggable
+    {
+        protected double[] _elements; // Масив елементів вектора (змінено на protected для спадкування)
 
         // Публічний тільки для читання перегляд елементів
         public System.Collections.Generic.IReadOnlyList<double> Elements => Array.AsReadOnly(_elements);
@@ -134,11 +140,18 @@ namespace Lab4
             for (int i = 0; i < Shape4D.DIMENSION; i++) sum += _elements[i];
             return sum;
         }
+
+        // Однорядковий лог — коротка інформативна запис
+        public virtual void LogInfo()
+        {
+            // Короткий формат: тип, максимальний елемент, сума
+            Console.WriteLine($"Vector4D (one-line): Max={FindMax():F2}, Sum={CalculateSum():F2}, Elements=[{string.Join(", ", Elements)}]");
+        }
     }
 
     // Похідний клас матриці 4x4
     // Тепер реалізує контракт Shape4D напряму (не наслідується від Vector4D)
-    public class Matrix : Shape4D
+    public class Matrix : Vector4D
     {
         private double[,] _matrix; // Двовимірний масив для матриці (теперь приватне поле)
 
@@ -265,6 +278,27 @@ namespace Lab4
                     sum += _matrix[i, j];
             return sum;
         }
+
+        // Детальний багаторядковий лог звіту для матриці
+        public override void LogInfo()
+        {
+            Console.WriteLine("Matrix (detailed report):");
+            Console.WriteLine($"Size: {Shape4D.DIMENSION}x{Shape4D.DIMENSION}");
+            Console.WriteLine("Elements:");
+            for (int i = 0; i < Shape4D.DIMENSION; i++)
+            {
+                Console.Write("  ");
+                for (int j = 0; j < Shape4D.DIMENSION; j++)
+                {
+                    Console.Write($"{_matrix[i, j]:F2}");
+                    if (j < Shape4D.DIMENSION - 1) Console.Write(", ");
+                }
+                Console.WriteLine();
+            }
+            Console.WriteLine($"Min = {FindMin():F2}");
+            Console.WriteLine($"Max = {FindMax():F2}");
+            Console.WriteLine($"Sum = {CalculateSum():F2}");
+        }
     }
     // Головний клас програми
     class Program
@@ -350,6 +384,22 @@ namespace Lab4
                 double max = objects[i].FindMax();
                 Console.WriteLine($"Максимальний елемент: {max}");
                 Console.WriteLine($"→ Викликано метод з класу: {objects[i].GetType().Name}");
+            }
+
+            // --- ДЕМОНСТРАЦІЯ ILoggable через масив інтерфейсу ---
+            Console.WriteLine("\n--- ДЕМОНСТРАЦІЯ ILoggable ---\n");
+            ILoggable[] loggers = new ILoggable[objects.Length];
+            for (int i = 0; i < objects.Length; i++)
+            {
+                // тут ми знаємо, що обидва класи реалізують ILoggable
+                loggers[i] = (ILoggable)objects[i];
+            }
+
+            Console.WriteLine("Викликаємо LogInfo() через інтерфейс ILoggable:");
+            for (int i = 0; i < loggers.Length; i++)
+            {
+                Console.WriteLine($"\n>> Logger #{i + 1} (через ILoggable, тип: {loggers[i].GetType().Name}):");
+                loggers[i].LogInfo();
             }
             Console.WriteLine("\n" + new string('═', 65));
             Console.WriteLine(" ВИСНОВОК: Віртуальні методи дозволяють викликати правильну");
@@ -492,3 +542,4 @@ Console.WriteLine("\n→ Динамічно створюємо об'єкт ти�
         }
     }
 }
+
