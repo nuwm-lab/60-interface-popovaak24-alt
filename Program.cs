@@ -3,22 +3,18 @@ using System.Collections.Generic;
 
 namespace Lab4
 {
-    // Абстрактний базовий клас, який виділяє загальні контракти для "4-елементних" контейнерів
-    public abstract class Container4
+    // Абстрактний базовий клас Shape4D — загальний контракт для 4-елементних фігур/контейнерів
+    public abstract class Shape4D
     {
         public const int DIMENSION = 4;
 
         // Конструктор базового класу
-        protected Container4()
+        protected Shape4D()
         {
-            Console.WriteLine($"[Container4] Створено екземпляр типу {GetType().Name}");
+            Console.WriteLine($"[Shape4D] Створено екземпляр типу {GetType().Name}");
         }
 
-        // Деструктор (фіналізатор)
-        ~Container4()
-        {
-            Console.WriteLine($"[Container4] Фіналізатор викликано для {GetType().Name}");
-        }
+        // (Фіналізатор видалено: unmanaged-ресурси не використовуються)
 
         // Контракти, що мають реалізувати похідні класи
         public abstract void SetElements();
@@ -27,28 +23,45 @@ namespace Lab4
     }
 
     // Базовий клас одновимірного вектора розмірності 4
-    public class Vector4D : Container4
+    public class Vector4D : Shape4D
     {
-        protected double[] _elements; // Масив елементів вектора
+        private double[] _elements; // Масив елементів вектора (тепер приватне поле)
+
+        // Публічний тільки для читання перегляд елементів
+        public System.Collections.Generic.IReadOnlyList<double> Elements => Array.AsReadOnly(_elements);
+
+        // Індексатор для читання/запису окремих елементів
+        public double this[int index]
+        {
+            get
+            {
+                if (index < 0 || index >= Shape4D.DIMENSION) throw new IndexOutOfRangeException(nameof(index));
+                return _elements[index];
+            }
+            set
+            {
+                if (index < 0 || index >= Shape4D.DIMENSION) throw new IndexOutOfRangeException(nameof(index));
+                _elements[index] = value;
+            }
+        }
+
+        // Метод для зміни одного елементу
+        public void SetElement(int index, double value) => this[index] = value;
 
         // Конструктор
         public Vector4D() : base()
         {
-            _elements = new double[Container4.DIMENSION];
+            _elements = new double[Shape4D.DIMENSION];
             Console.WriteLine("[Vector4D] Конструктор виконано.");
         }
 
-        // Деструктор
-        ~Vector4D()
-        {
-            Console.WriteLine("[Vector4D] Деструктор (фіналізатор) викликано.");
-        }
+        // (Фіналізатор видалено: unmanaged-ресурси не використовуються)
 
         // Віртуальний метод для задання елементів вектора
         public override void SetElements()
         {
-            Console.WriteLine($"Введіть {Container4.DIMENSION} елементи вектора:");
-            for (int i = 0; i < Container4.DIMENSION; i++)
+            Console.WriteLine($"Введіть {Shape4D.DIMENSION} елементи вектора:");
+            for (int i = 0; i < Shape4D.DIMENSION; i++)
             {
                 Console.Write($"Елемент [{i}]: ");
                 string? input = Console.ReadLine();
@@ -65,14 +78,14 @@ namespace Lab4
             }
         }
 
-        // Метод для задання елементів з масиву (для тестування)
-        public void SetElements(double[] values)
+    // Метод для задання елементів з масиву (для тестування)
+    public void SetElements(double[] values)
         {
             if (values is null)
                 throw new ArgumentNullException(nameof(values));
-            if (values.Length != Container4.DIMENSION)
-                throw new ArgumentException($"Очікується масив довжини {Container4.DIMENSION}.", nameof(values));
-            for (int i = 0; i < Container4.DIMENSION; i++)
+            if (values.Length != Shape4D.DIMENSION)
+                throw new ArgumentException($"Очікується масив довжини {Shape4D.DIMENSION}.", nameof(values));
+            for (int i = 0; i < Shape4D.DIMENSION; i++)
             {
                 _elements[i] = values[i];
             }
@@ -82,10 +95,10 @@ namespace Lab4
         public override void Display()
         {
             Console.Write("Вектор: [");
-            for (int i = 0; i < Container4.DIMENSION; i++)
+            for (int i = 0; i < Shape4D.DIMENSION; i++)
             {
                 Console.Write($"{_elements[i]:F2}");
-                if (i < Container4.DIMENSION - 1) Console.Write(", ");
+                if (i < Shape4D.DIMENSION - 1) Console.Write(", ");
             }
             Console.WriteLine("]");
         }
@@ -94,40 +107,77 @@ namespace Lab4
         public override double FindMax()
         {
             double max = _elements[0];
-            for (int i = 1; i < Container4.DIMENSION; i++)
+            for (int i = 1; i < Shape4D.DIMENSION; i++)
             {
                 if (_elements[i] > max)
                     max = _elements[i];
             }
             return max;
         }
+
+        // Знаходить мінімальний елемент
+        public double FindMin()
+        {
+            double min = _elements[0];
+            for (int i = 1; i < Shape4D.DIMENSION; i++)
+            {
+                if (_elements[i] < min)
+                    min = _elements[i];
+            }
+            return min;
+        }
+
+        // Обчислює суму елементів
+        public double CalculateSum()
+        {
+            double sum = 0.0;
+            for (int i = 0; i < Shape4D.DIMENSION; i++) sum += _elements[i];
+            return sum;
+        }
     }
 
     // Похідний клас матриці 4x4
-    public class Matrix : Vector4D
+    // Тепер реалізує контракт Shape4D напряму (не наслідується від Vector4D)
+    public class Matrix : Shape4D
     {
-        private double[,] _matrix; // Двовимірний масив для матриці
+        private double[,] _matrix; // Двовимірний масив для матриці (теперь приватне поле)
+
+        // Індексатор для доступу до елементів матриці
+        public double this[int row, int col]
+        {
+            get
+            {
+                if (row < 0 || row >= Shape4D.DIMENSION) throw new IndexOutOfRangeException(nameof(row));
+                if (col < 0 || col >= Shape4D.DIMENSION) throw new IndexOutOfRangeException(nameof(col));
+                return _matrix[row, col];
+            }
+            set
+            {
+                if (row < 0 || row >= Shape4D.DIMENSION) throw new IndexOutOfRangeException(nameof(row));
+                if (col < 0 || col >= Shape4D.DIMENSION) throw new IndexOutOfRangeException(nameof(col));
+                _matrix[row, col] = value;
+            }
+        }
+
+        // Метод для встановлення одного елементу
+        public void SetElement(int row, int col, double value) => this[row, col] = value;
 
         // Конструктор
         public Matrix() : base()
         {
-            _matrix = new double[Container4.DIMENSION, Container4.DIMENSION];
+            _matrix = new double[Shape4D.DIMENSION, Shape4D.DIMENSION];
             Console.WriteLine("[Matrix] Конструктор виконано.");
         }
 
-        // Деструктор
-        ~Matrix()
-        {
-            Console.WriteLine("[Matrix] Деструктор (фіналізатор) викликано.");
-        }
+        // (Фіналізатор видалено: unmanaged-ресурси не використовуються)
 
         // Перевантажений метод для задання елементів матриці
         public override void SetElements()
         {
-            Console.WriteLine($"Введіть елементи матриці {Container4.DIMENSION}x{Container4.DIMENSION}:");
-            for (int i = 0; i < Container4.DIMENSION; i++)
+            Console.WriteLine($"Введіть елементи матриці {Shape4D.DIMENSION}x{Shape4D.DIMENSION}:");
+            for (int i = 0; i < Shape4D.DIMENSION; i++)
             {
-                for (int j = 0; j < Container4.DIMENSION; j++)
+                for (int j = 0; j < Shape4D.DIMENSION; j++)
                 {
                     Console.Write($"Елемент [{i},{j}]: ");
                     string? input = Console.ReadLine();
@@ -150,11 +200,11 @@ namespace Lab4
         {
             if (values is null)
                 throw new ArgumentNullException(nameof(values));
-            if (values.GetLength(0) != Container4.DIMENSION || values.GetLength(1) != Container4.DIMENSION)
-                throw new ArgumentException($"Очікується матриця розміру {Container4.DIMENSION}x{Container4.DIMENSION}.", nameof(values));
-            for (int i = 0; i < Container4.DIMENSION; i++)
+            if (values.GetLength(0) != Shape4D.DIMENSION || values.GetLength(1) != Shape4D.DIMENSION)
+                throw new ArgumentException($"Очікується матриця розміру {Shape4D.DIMENSION}x{Shape4D.DIMENSION}.", nameof(values));
+            for (int i = 0; i < Shape4D.DIMENSION; i++)
             {
-                for (int j = 0; j < Container4.DIMENSION; j++)
+                for (int j = 0; j < Shape4D.DIMENSION; j++)
                 {
                     _matrix[i, j] = values[i, j];
                 }
@@ -164,11 +214,11 @@ namespace Lab4
         // Перевантажений метод для виведення матриці на екран
         public override void Display()
         {
-            Console.WriteLine($"Матриця {Container4.DIMENSION}x{Container4.DIMENSION}:");
-            for (int i = 0; i < Container4.DIMENSION; i++)
+            Console.WriteLine($"Матриця {Shape4D.DIMENSION}x{Shape4D.DIMENSION}:");
+            for (int i = 0; i < Shape4D.DIMENSION; i++)
             {
                 Console.Write("| ");
-                for (int j = 0; j < Container4.DIMENSION; j++)
+                for (int j = 0; j < Shape4D.DIMENSION; j++)
                 {
                     Console.Write($"{_matrix[i, j]:F2} ");
                 }
@@ -180,15 +230,40 @@ namespace Lab4
         public override double FindMax()
         {
             double max = _matrix[0, 0];
-            for (int i = 0; i < Container4.DIMENSION; i++)
+            for (int i = 0; i < Shape4D.DIMENSION; i++)
             {
-                for (int j = 0; j < Container4.DIMENSION; j++)
+                for (int j = 0; j < Shape4D.DIMENSION; j++)
                 {
                     if (_matrix[i, j] > max)
                         max = _matrix[i, j];
                 }
             }
             return max;
+        }
+
+        // Знаходить мінімальний елемент матриці
+        public double FindMin()
+        {
+            double min = _matrix[0, 0];
+            for (int i = 0; i < Shape4D.DIMENSION; i++)
+            {
+                for (int j = 0; j < Shape4D.DIMENSION; j++)
+                {
+                    if (_matrix[i, j] < min)
+                        min = _matrix[i, j];
+                }
+            }
+            return min;
+        }
+
+        // Обчислює суму всіх елементів матриці
+        public double CalculateSum()
+        {
+            double sum = 0.0;
+            for (int i = 0; i < Shape4D.DIMENSION; i++)
+                for (int j = 0; j < Shape4D.DIMENSION; j++)
+                    sum += _matrix[i, j];
+            return sum;
         }
     }
     // Головний клас програми
@@ -227,16 +302,16 @@ namespace Lab4
         static void DemonstrateDynamicPolymorphism()
         {
             Console.WriteLine("📌 ДЕМОНСТРАЦІЯ ДИНАМІЧНОГО ПОЛІМОРФІЗМУ\n");
-            Console.WriteLine("Створюємо масив покажчиків базового типу Vector4D,");
+            Console.WriteLine("Створюємо масив покажчиків базового типу Shape4D,");
             Console.WriteLine("але фактичний тип об'єкта визначається динамічно!\n");
             // Масив покажчиків на базовий клас (тип невідомий на етапі компіляції)
             const int DEMO_COUNT = 4;
-            Vector4D[] objects = new Vector4D[DEMO_COUNT];
+                Shape4D[] objects = new Shape4D[DEMO_COUNT];
             // Динамічне створення різних типів об'єктів
             Console.WriteLine("Створюємо об'єкти динамічно (тип визначається під час виконання):\n");
             // Об'єкт 1: Vector4D
             objects[0] = new Vector4D();
-            objects[0].SetElements(new double[] { 1.5, 8.3, 3.7, 5.2 });
+            ((Vector4D)objects[0]).SetElements(new double[] { 1.5, 8.3, 3.7, 5.2 });
             Console.WriteLine("✓ Створено об'єкт типу Vector4D");
             // Об'єкт 2: Matrix
             objects[1] = new Matrix();
@@ -249,7 +324,7 @@ namespace Lab4
             Console.WriteLine("✓ Створено об'єкт типу Matrix");
             // Об'єкт 3: Vector4D
             objects[2] = new Vector4D();
-            objects[2].SetElements(new double[] { 10.5, 2.1, 15.8, 7.3 });
+            ((Vector4D)objects[2]).SetElements(new double[] { 10.5, 2.1, 15.8, 7.3 });
             Console.WriteLine("✓ Створено об'єкт типу Vector4D");
             // Об'єкт 4: Matrix
             objects[3] = new Matrix();
@@ -278,7 +353,7 @@ namespace Lab4
             }
             Console.WriteLine("\n" + new string('═', 65));
             Console.WriteLine(" ВИСНОВОК: Віртуальні методи дозволяють викликати правильну");
-            Console.WriteLine("   версію методу в залежності від фактичного типу об'єкта,");
+                    Console.WriteLine("Створюємо масив покажчиків базового типу Shape4D,");
             Console.WriteLine("   навіть якщо ми працюємо через покажчик базового класу!");
             Console.WriteLine(new string('═', 65));
         }
@@ -286,7 +361,7 @@ namespace Lab4
         static void RunDynamicMode()
         {
             Console.WriteLine(" ІНТЕРАКТИВНИЙ РЕЖИМ З ДИНАМІЧНИМ ВИБОРОМ ТИПУ\n");
-            List<Vector4D> dynamicObjects = new List<Vector4D>();
+            List<Shape4D> dynamicObjects = new List<Shape4D>();
             bool continueAdding = true;
             while (continueAdding)
             {
@@ -297,7 +372,7 @@ namespace Lab4
                 Console.Write("Ваш вибір: ");
                 string? choice = Console.ReadLine();
                 // Динамічне створення об'єкта на основі вибору користувача
-                Vector4D? newObject = null;
+                Shape4D? newObject = null;
                 switch (choice)
                 {
                     case "1":
@@ -374,8 +449,8 @@ Console.WriteLine("\n→ Динамічно створюємо об'єкт ти�
             else
             {
                 Random rand = new Random();
-                double[] values = new double[Vector4D.DIMENSION];
-                for (int i = 0; i < Vector4D.DIMENSION; i++)
+                double[] values = new double[Shape4D.DIMENSION];
+                for (int i = 0; i < Shape4D.DIMENSION; i++)
                 {
                     values[i] = Math.Round(rand.NextDouble() * 20, 2);
                 }
@@ -402,10 +477,10 @@ Console.WriteLine("\n→ Динамічно створюємо об'єкт ти�
             else
             {
                 Random rand = new Random();
-   double[,] values = new double[Vector4D.DIMENSION, Vector4D.DIMENSION];
-                for (int i = 0; i < Vector4D.DIMENSION; i++)
+                double[,] values = new double[Shape4D.DIMENSION, Shape4D.DIMENSION];
+                for (int i = 0; i < Shape4D.DIMENSION; i++)
                 {
-                    for (int j = 0; j < Vector4D.DIMENSION; j++)
+                    for (int j = 0; j < Shape4D.DIMENSION; j++)
                     {
            values[i, j] = Math.Round(rand.NextDouble() * 20, 2);
                     }
