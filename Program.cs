@@ -1,7 +1,6 @@
 using System;
 using System.Collections.Generic;
 
-
 namespace Lab4
 {
     // Абстрактний базовий клас, який виділяє загальні контракти для "4-елементних" контейнерів
