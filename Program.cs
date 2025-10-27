@@ -1,13 +1,27 @@
 using System;
 using System.Collections.Generic;
+using System.Linq;
 
 namespace Lab4
 {
+    // Інтерфейс для контейнерів з базовими операціями
+    public interface IContainer
+    {
+        void SetElements();
+        void Display();
+        double FindMax();
+    }
+
+    // Інтерфейс для логування інформації про об'єкт
+    public interface ILoggable
+    {
+        void LogInfo();
+    }
+
     // Абстрактний базовий клас, який виділяє загальні контракти для "4-елементних" контейнерів
-    public abstract class Container4
+    public abstract class Container4 : IContainer
     {
         public const int DIMENSION = 4;
-
 
         // Конструктор базового класу
         protected Container4()
@@ -15,13 +29,11 @@ namespace Lab4
             Console.WriteLine($"[Container4] Створено екземпляр типу {GetType().Name}");
         }
 
-
         // Деструктор (фіналізатор)
         ~Container4()
         {
             Console.WriteLine($"[Container4] Фіналізатор викликано для {GetType().Name}");
         }
-
 
         // Контракти, що мають реалізувати похідні класи
         public abstract void SetElements();
@@ -29,12 +41,10 @@ namespace Lab4
         public abstract double FindMax();
     }
 
-
     // Базовий клас одновимірного вектора розмірності 4
-    public class Vector4D : Container4
+    public class Vector4D : Container4, ILoggable
     {
-        protected double[] _elements; // Масив елементів вектора
-
+        private double[] _elements; // Масив елементів вектора
 
         // Конструктор
         public Vector4D() : base()
@@ -43,13 +53,11 @@ namespace Lab4
             Console.WriteLine("[Vector4D] Конструктор виконано.");
         }
 
-
         // Деструктор
         ~Vector4D()
         {
             Console.WriteLine("[Vector4D] Деструктор (фіналізатор) викликано.");
         }
-
 
         // Віртуальний метод для задання елементів вектора
         public override void SetElements()
@@ -72,7 +80,6 @@ namespace Lab4
             }
         }
 
-
         // Метод для задання елементів з масиву (для тестування)
         public void SetElements(double[] values)
         {
@@ -85,7 +92,6 @@ namespace Lab4
                 _elements[i] = values[i];
             }
         }
-
 
         // Віртуальний метод для виведення вектора на екран
         public override void Display()
@@ -111,14 +117,18 @@ namespace Lab4
             }
             return max;
         }
+
+        // Реалізація ILoggable - коротка однорядкова інформація
+        public virtual void LogInfo()
+        {
+            Console.WriteLine($"[LOG] Vector4D: Max={FindMax():F2}, Elements=[{string.Join(", ", _elements.Select(e => e.ToString("F2")))}]");
+        }
     }
 
-
     // Похідний клас матриці 4x4
-    public class Matrix : Vector4D
+    public class Matrix : Container4, ILoggable
     {
         private double[,] _matrix; // Двовимірний масив для матриці
-
 
         // Конструктор
         public Matrix() : base()
@@ -207,6 +217,20 @@ namespace Lab4
             }
             return max;
         }
+
+        // Реалізація ILoggable - детальна багаторядкова інформація
+        public virtual void LogInfo()
+        {
+            Console.WriteLine($"[LOG] Matrix {Container4.DIMENSION}x{Container4.DIMENSION}:");
+            Console.WriteLine($"      Max element: {FindMax():F2}");
+            Console.Write("      First row: [");
+            for (int j = 0; j < Container4.DIMENSION; j++)
+            {
+                Console.Write($"{_matrix[0, j]:F2}");
+                if (j < Container4.DIMENSION - 1) Console.Write(", ");
+            }
+            Console.WriteLine("]");
+        }
     }
     // Головний клас програми
     class Program
@@ -220,6 +244,14 @@ namespace Lab4
             Console.WriteLine("╚═══════════════════════════════════════════════════════════════╝\n");
             try
             {
+                // Демонстрація роботи через інтерфейси
+                DemonstrateInterfaces();
+                Console.WriteLine("\n" + new string('═', 65) + "\n");
+                
+                // ДОДАТКОВЕ ЗАВДАННЯ: Демонстрація інтерфейсу ILoggable
+                DemonstrateLoggableInterface();
+                Console.WriteLine("\n" + new string('═', 65) + "\n");
+                
                 // Демонстрація динамічного створення об'єктів
                 DemonstrateDynamicPolymorphism();
                 Console.WriteLine("\n" + new string('═', 65) + "\n");
@@ -240,20 +272,195 @@ namespace Lab4
                 // Ігноруємо помилку при перенаправленні вводу
             }
         }
+
+        // Метод для демонстрації роботи через інтерфейси
+        static void DemonstrateInterfaces()
+        {
+            Console.WriteLine("📌 ДЕМОНСТРАЦІЯ РОБОТИ ЧЕРЕЗ ІНТЕРФЕЙСИ\n");
+
+            // Створення об'єктів через інтерфейс IContainer
+            Console.WriteLine("1️⃣ Робота через інтерфейс IContainer:\n");
+
+            IContainer c1 = new Vector4D();
+            ((Vector4D)c1).SetElements(new double[] { 5.0, 10.0, 3.5, 7.2 });
+            Console.WriteLine("→ Створено Vector4D через IContainer");
+            c1.Display();
+            Console.WriteLine($"   Max через IContainer: {c1.FindMax():F2}\n");
+
+            IContainer c2 = new Matrix();
+            ((Matrix)c2).SetElements(new double[,] {
+                { 1.0, 2.0, 3.0, 4.0 },
+                { 5.0, 6.0, 7.0, 8.0 },
+                { 9.0, 10.0, 11.0, 12.0 },
+                { 13.0, 14.0, 15.0, 16.0 }
+            });
+            Console.WriteLine("→ Створено Matrix через IContainer");
+            c2.Display();
+            Console.WriteLine($"   Max через IContainer: {c2.FindMax():F2}\n");
+
+            // Робота через інтерфейс ILoggable
+            Console.WriteLine("2️⃣ Робота через інтерфейс ILoggable:\n");
+
+            ILoggable[] loggables = new ILoggable[2];
+            loggables[0] = (Vector4D)c1;
+            loggables[1] = (Matrix)c2;
+
+            Console.WriteLine("Виклик LogInfo() через інтерфейс ILoggable:");
+            foreach (var loggable in loggables)
+            {
+                loggable.LogInfo();
+            }
+
+            // Додаткові приклади використання інтерфейсів
+            Console.WriteLine("\n3️⃣ Масив інтерфейсів IContainer:\n");
+
+            IContainer[] containers = new IContainer[3];
+            containers[0] = new Vector4D();
+            ((Vector4D)containers[0]).SetElements(new double[] { 2.5, 4.5, 6.5, 8.5 });
+            
+            containers[1] = new Matrix();
+            ((Matrix)containers[1]).SetElements(new double[,] {
+                { 0.5, 1.5, 2.5, 3.5 },
+                { 4.5, 5.5, 6.5, 7.5 },
+                { 8.5, 9.5, 10.5, 11.5 },
+                { 12.5, 13.5, 14.5, 15.5 }
+            });
+            
+            containers[2] = new Vector4D();
+            ((Vector4D)containers[2]).SetElements(new double[] { 1.1, 2.2, 3.3, 4.4 });
+
+            Console.WriteLine("Обробка масиву IContainer в циклі:");
+            for (int i = 0; i < containers.Length; i++)
+            {
+                Console.WriteLine($"\n   Контейнер #{i + 1} (тип: {containers[i].GetType().Name}):");
+                Console.Write("   ");
+                containers[i].Display();
+                Console.WriteLine($"   Максимум: {containers[i].FindMax():F2}");
+            }
+
+            // Демонстрація передачі інтерфейсу як параметр методу
+            Console.WriteLine("\n4️⃣ Передача інтерфейсів як параметрів методів:\n");
+            
+            ProcessContainer(c1);
+            ProcessContainer(c2);
+            
+            Console.WriteLine("\n5️⃣ Поліморфна обробка через List<ILoggable>:\n");
+            
+            List<ILoggable> loggableList = new List<ILoggable>();
+            loggableList.Add(new Vector4D());
+            ((Vector4D)loggableList[0]).SetElements(new double[] { 9.9, 8.8, 7.7, 6.6 });
+            
+            loggableList.Add(new Matrix());
+            ((Matrix)loggableList[1]).SetElements(new double[,] {
+                { 20, 19, 18, 17 },
+                { 16, 15, 14, 13 },
+                { 12, 11, 10, 9 },
+                { 8, 7, 6, 5 }
+            });
+
+            Console.WriteLine("Виклик LogInfo() для елементів списку:");
+            loggableList.ForEach(item => item.LogInfo());
+
+            Console.WriteLine("\n" + new string('-', 65));
+            Console.WriteLine("✅ ВИСНОВОК: Інтерфейси дозволяють працювати з різними");
+            Console.WriteLine("   класами через єдиний контракт, забезпечуючи гнучкість");
+            Console.WriteLine("   та можливість заміни реалізацій без зміни коду!");
+            Console.WriteLine(new string('-', 65));
+        }
+
+        // Допоміжний метод для обробки IContainer
+        static void ProcessContainer(IContainer container)
+        {
+            Console.WriteLine($"→ Обробка контейнера типу: {container.GetType().Name}");
+            container.Display();
+            double max = container.FindMax();
+            Console.WriteLine($"  Знайдений максимум: {max:F2}\n");
+        }
+
+        // ДОДАТКОВЕ ЗАВДАННЯ: Демонстрація інтерфейсу ILoggable
+        static void DemonstrateLoggableInterface()
+        {
+            Console.WriteLine("📌 ДОДАТКОВЕ ЗАВДАННЯ: ІНТЕРФЕЙС ILoggable");
+            Console.WriteLine("   Різні реалізації одного інтерфейсу\n");
+
+            Console.WriteLine(new string('-', 65));
+            Console.WriteLine("ТЕОРІЯ: Інтерфейс ILoggable визначає контракт з методом LogInfo().");
+            Console.WriteLine("Кожен клас може реалізувати цей метод по-своєму:");
+            Console.WriteLine("  • Vector4D → коротка однорядкова інформація");
+            Console.WriteLine("  • Matrix   → повний багаторядковий звіт");
+            Console.WriteLine(new string('-', 65) + "\n");
+
+            // Створення різних об'єктів
+            Console.WriteLine("🔹 Створюємо об'єкти для демонстрації:\n");
+
+            Vector4D vec1 = new Vector4D();
+            vec1.SetElements(new double[] { 3.14, 2.71, 1.41, 1.73 });
+
+            Vector4D vec2 = new Vector4D();
+            vec2.SetElements(new double[] { 10.5, 20.3, 15.7, 8.2 });
+
+            Matrix mat1 = new Matrix();
+            mat1.SetElements(new double[,] {
+                { 1.1, 2.2, 3.3, 4.4 },
+                { 5.5, 6.6, 7.7, 8.8 },
+                { 9.9, 10.1, 11.2, 12.3 },
+                { 13.4, 14.5, 15.6, 16.7 }
+            });
+
+            Matrix mat2 = new Matrix();
+            mat2.SetElements(new double[,] {
+                { 100, 200, 150, 175 },
+                { 125, 225, 110, 190 },
+                { 135, 165, 250, 205 },
+                { 145, 155, 180, 300 }
+            });
+
+            Console.WriteLine("\n" + new string('-', 65));
+            Console.WriteLine("ДЕМОНСТРАЦІЯ: Масив ILoggable[] з різними типами об'єктів");
+            Console.WriteLine(new string('-', 65) + "\n");
+
+            // Створення масиву інтерфейсів ILoggable
+            ILoggable[] loggables = new ILoggable[4];
+            loggables[0] = vec1;
+            loggables[1] = mat1;
+            loggables[2] = vec2;
+            loggables[3] = mat2;
+
+            Console.WriteLine($"📊 У масиві {loggables.Length} об'єкти різних типів:\n");
+
+            // Виклик LogInfo() через інтерфейс - демонстрація поліморфізму!
+            for (int i = 0; i < loggables.Length; i++)
+            {
+                Console.WriteLine($"[{i + 1}] Тип об'єкта: {loggables[i].GetType().Name}");
+                loggables[i].LogInfo();  // ← Один і той же виклик, різна поведінка!
+                Console.WriteLine();
+            }
+
+            Console.WriteLine(new string('-', 65));
+            Console.WriteLine("🎯 ВИСНОВОК ДОДАТКОВОГО ЗАВДАННЯ:");
+            Console.WriteLine("   ✓ Інтерфейс ILoggable забезпечує єдиний API (метод LogInfo)");
+            Console.WriteLine("   ✓ Кожен клас реалізує метод по-своєму:");
+            Console.WriteLine("     - Vector4D: однорядкове логування з усіма елементами");
+            Console.WriteLine("     - Matrix:   багаторядковий звіт з деталями");
+            Console.WriteLine("   ✓ Через масив ILoggable[] можна викликати різні реалізації");
+            Console.WriteLine("     однієї і тієї ж операції - це і є сила поліморфізму!");
+            Console.WriteLine(new string('-', 65));
+        }
+
         // Метод для демонстрації динамічного поліморфізму
         static void DemonstrateDynamicPolymorphism()
         {
             Console.WriteLine("📌 ДЕМОНСТРАЦІЯ ДИНАМІЧНОГО ПОЛІМОРФІЗМУ\n");
-            Console.WriteLine("Створюємо масив покажчиків базового типу Vector4D,");
+            Console.WriteLine("Створюємо масив покажчиків базового типу Container4,");
             Console.WriteLine("але фактичний тип об'єкта визначається динамічно!\n");
             // Масив покажчиків на базовий клас (тип невідомий на етапі компіляції)
             const int DEMO_COUNT = 4;
-            Vector4D[] objects = new Vector4D[DEMO_COUNT];
+            Container4[] objects = new Container4[DEMO_COUNT];
             // Динамічне створення різних типів об'єктів
             Console.WriteLine("Створюємо об'єкти динамічно (тип визначається під час виконання):\n");
             // Об'єкт 1: Vector4D
             objects[0] = new Vector4D();
-            objects[0].SetElements(new double[] { 1.5, 8.3, 3.7, 5.2 });
+            ((Vector4D)objects[0]).SetElements(new double[] { 1.5, 8.3, 3.7, 5.2 });
             Console.WriteLine("✓ Створено об'єкт типу Vector4D");
             // Об'єкт 2: Matrix
             objects[1] = new Matrix();
@@ -266,7 +473,7 @@ namespace Lab4
             Console.WriteLine("✓ Створено об'єкт типу Matrix");
             // Об'єкт 3: Vector4D
             objects[2] = new Vector4D();
-            objects[2].SetElements(new double[] { 10.5, 2.1, 15.8, 7.3 });
+            ((Vector4D)objects[2]).SetElements(new double[] { 10.5, 2.1, 15.8, 7.3 });
             Console.WriteLine("✓ Створено об'єкт типу Vector4D");
             // Об'єкт 4: Matrix
             objects[3] = new Matrix();
@@ -303,7 +510,7 @@ namespace Lab4
         static void RunDynamicMode()
         {
             Console.WriteLine(" ІНТЕРАКТИВНИЙ РЕЖИМ З ДИНАМІЧНИМ ВИБОРОМ ТИПУ\n");
-            List<Vector4D> dynamicObjects = new List<Vector4D>();
+            List<Container4> dynamicObjects = new List<Container4>();
             bool continueAdding = true;
             while (continueAdding)
             {
@@ -314,7 +521,7 @@ namespace Lab4
                 Console.Write("Ваш вибір: ");
                 string? choice = Console.ReadLine();
                 // Динамічне створення об'єкта на основі вибору користувача
-                Vector4D? newObject = null;
+                Container4? newObject = null;
                 switch (choice)
                 {
                     case "1":
